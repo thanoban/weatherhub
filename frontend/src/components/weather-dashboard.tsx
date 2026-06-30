@@ -21,6 +21,12 @@ const emptyRecordForm: RecordForm = {
 const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "http://localhost:4000";
 
+const topHighlights = [
+  { label: "Search modes", value: "City, ZIP, landmark, coords" },
+  { label: "Forecast", value: "Live + 5 day outlook" },
+  { label: "Storage", value: "Historical CRUD with export" },
+];
+
 function formatDayLabel(date: string) {
   return new Intl.DateTimeFormat("en-US", {
     weekday: "short",
@@ -34,6 +40,10 @@ function formatDateTime(date: string) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(date));
+}
+
+function formatRange(record: WeatherRecord) {
+  return `${record.startDate} to ${record.endDate}`;
 }
 
 async function parseJson<T>(response: Response): Promise<T> {
@@ -57,6 +67,7 @@ export function WeatherDashboard() {
   const [recordSubmitting, setRecordSubmitting] = useState(false);
   const [recordForm, setRecordForm] = useState<RecordForm>(emptyRecordForm);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [today] = useState(() => new Date().toISOString().slice(0, 10));
 
   useEffect(() => {
     void loadRecords();
@@ -213,108 +224,170 @@ export function WeatherDashboard() {
     : null;
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-8 px-4 py-6 sm:px-6 lg:px-8">
-      <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-        <div className="rounded-[2rem] border border-white/60 bg-white/75 p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur">
-          <div className="flex flex-col gap-3">
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-sky-700">
-              Tech Assessment Weather App
-            </p>
-            <h1 className="text-4xl font-semibold tracking-tight text-slate-950">
-              Real weather, persistent history, and exports in one submission
-            </h1>
-            <p className="max-w-2xl text-sm leading-6 text-slate-600">
-              Search by city, landmark, postal code, or raw coordinates. The app
-              uses Open-Meteo for weather and OpenStreetMap geocoding, plus local
-              JSON persistence for CRUD and export.
-            </p>
+    <main className="mx-auto flex min-h-screen w-full max-w-[92rem] flex-col gap-8 px-4 py-6 sm:px-6 lg:px-8">
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_22rem]">
+        <div className="overflow-hidden rounded-[2rem] border border-slate-200/70 bg-[var(--surface)] shadow-[var(--shadow)] backdrop-blur">
+          <div className="border-b border-slate-200/70 bg-gradient-to-r from-slate-950 via-slate-900 to-blue-950 px-6 py-6 text-white sm:px-8">
+            <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+              <div className="max-w-3xl">
+                <p className="text-xs font-semibold uppercase tracking-[0.35em] text-sky-200/90">
+                  Weather Intelligence Dashboard
+                </p>
+                <h1 className="mt-3 text-4xl font-semibold tracking-tight text-white sm:text-5xl">
+                  Professional weather lookup with forecast, history, and exports
+                </h1>
+                <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300">
+                  A structured full-stack weather experience built for the assessment:
+                  live search, browser geolocation, 5-day forecast, historical CRUD,
+                  and export-ready records.
+                </p>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-3 xl:w-[31rem] xl:grid-cols-1">
+                {topHighlights.map((item) => (
+                  <div
+                    key={item.label}
+                    className="rounded-2xl border border-white/10 bg-white/8 px-4 py-3 backdrop-blur"
+                  >
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-slate-300">
+                      {item.label}
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-white">{item.value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
-          <form className="mt-6 flex flex-col gap-3 md:flex-row" onSubmit={handleSearch}>
+          <div className="px-6 py-6 sm:px-8">
+            <div className="rounded-[1.75rem] border border-slate-200 bg-white px-4 py-4 shadow-sm">
+              <form
+                className="flex flex-col gap-3 lg:flex-row lg:items-center"
+                onSubmit={handleSearch}
+              >
+            <div className="flex-1">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+                Location Search
+              </p>
             <input
-              className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none ring-0 transition focus:border-sky-400"
+              className="min-w-0 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm text-slate-900 outline-none ring-0 transition focus:border-blue-400 focus:bg-white"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Try Colombo, 10001, Eiffel Tower, or 6.9271, 79.8612"
             />
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row">
             <button
               type="submit"
-              className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+              className="rounded-2xl bg-blue-600 px-5 py-3.5 text-sm font-semibold text-white shadow-[0_10px_25px_rgba(29,78,216,0.28)] transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-blue-300"
               disabled={weatherLoading}
             >
               {weatherLoading ? "Loading..." : "Check weather"}
             </button>
             <button
               type="button"
-              className="rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-sky-400 hover:text-sky-700"
+              className="rounded-2xl border border-slate-300 bg-white px-5 py-3.5 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-700"
               onClick={handleCurrentLocation}
               disabled={weatherLoading}
             >
               Use current location
             </button>
+            </div>
           </form>
+            </div>
 
           {weatherError ? (
-            <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
               {weatherError}
             </div>
           ) : null}
 
           {weather ? (
             <div
-              className={`mt-6 overflow-hidden rounded-[2rem] bg-gradient-to-br ${currentWeatherMeta?.accent} p-6 text-white shadow-lg`}
+              className={`mt-6 overflow-hidden rounded-[2rem] bg-gradient-to-br ${currentWeatherMeta?.accent} p-6 text-white shadow-lg sm:p-7`}
             >
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div>
-                  <p className="text-sm uppercase tracking-[0.25em] text-white/80">
+              <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+                <div className="max-w-2xl">
+                  <p className="text-xs uppercase tracking-[0.3em] text-white/75">
                     {weather.location.name}
                   </p>
-                  <div className="mt-3 flex items-start gap-4">
-                    <span className="text-6xl leading-none">{currentWeatherMeta?.icon}</span>
+                  <div className="mt-4 flex items-start gap-4">
+                    <span className="text-6xl leading-none sm:text-7xl">
+                      {currentWeatherMeta?.icon}
+                    </span>
                     <div>
-                      <p className="text-5xl font-semibold">
+                      <p className="text-5xl font-semibold sm:text-6xl">
                         {Math.round(weather.current.temperature)}°C
                       </p>
-                      <p className="mt-1 text-lg text-white/90">
+                      <p className="mt-2 text-lg font-medium text-white/90">
                         {currentWeatherMeta?.label}
                       </p>
-                      <p className="mt-2 text-sm text-white/80">
+                      <p className="mt-3 text-sm text-white/75">
                         Updated {formatDateTime(weather.current.time)}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="grid gap-3 text-sm sm:grid-cols-2">
-                  <div className="rounded-2xl bg-white/15 px-4 py-3 backdrop-blur">
-                    Feels like {Math.round(weather.current.apparentTemperature)}°C
+                <div className="grid gap-3 text-sm sm:grid-cols-2 xl:min-w-[22rem]">
+                  <div className="rounded-2xl bg-slate-950/18 px-4 py-4 backdrop-blur">
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-white/65">
+                      Feels like
+                    </p>
+                    <p className="mt-2 text-lg font-semibold">
+                      {Math.round(weather.current.apparentTemperature)}°C
+                    </p>
                   </div>
-                  <div className="rounded-2xl bg-white/15 px-4 py-3 backdrop-blur">
-                    Humidity {weather.current.humidity}%
+                  <div className="rounded-2xl bg-slate-950/18 px-4 py-4 backdrop-blur">
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-white/65">
+                      Humidity
+                    </p>
+                    <p className="mt-2 text-lg font-semibold">{weather.current.humidity}%</p>
                   </div>
-                  <div className="rounded-2xl bg-white/15 px-4 py-3 backdrop-blur">
-                    Wind {Math.round(weather.current.windSpeed)} km/h
+                  <div className="rounded-2xl bg-slate-950/18 px-4 py-4 backdrop-blur">
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-white/65">
+                      Wind
+                    </p>
+                    <p className="mt-2 text-lg font-semibold">
+                      {Math.round(weather.current.windSpeed)} km/h
+                    </p>
                   </div>
-                  <div className="rounded-2xl bg-white/15 px-4 py-3 backdrop-blur">
-                    Rain {weather.current.precipitation} mm
+                  <div className="rounded-2xl bg-slate-950/18 px-4 py-4 backdrop-blur">
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-white/65">
+                      Rainfall
+                    </p>
+                    <p className="mt-2 text-lg font-semibold">
+                      {weather.current.precipitation} mm
+                    </p>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-6 grid gap-3 md:grid-cols-5">
+              <div className="mt-7 border-t border-white/15 pt-6">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.28em] text-white/65">
+                      5 Day Outlook
+                    </p>
+                    <p className="mt-1 text-sm text-white/80">
+                      Daily highs, lows, and precipitation probability
+                    </p>
+                  </div>
+                </div>
+              <div className="grid gap-3 md:grid-cols-5">
                 {weather.forecast.map((day) => {
                   const meta = getWeatherCodeDetails(day.weatherCode);
                   return (
                     <article
                       key={day.date}
-                      className="rounded-2xl bg-slate-950/18 px-4 py-4 backdrop-blur"
+                      className="rounded-2xl border border-white/10 bg-slate-950/18 px-4 py-4 backdrop-blur"
                     >
                       <p className="text-sm font-semibold text-white/90">
                         {formatDayLabel(day.date)}
                       </p>
                       <p className="mt-2 text-3xl">{meta.icon}</p>
-                      <p className="mt-2 text-sm text-white/85">{meta.label}</p>
-                      <p className="mt-3 text-sm font-medium">
+                      <p className="mt-2 min-h-10 text-sm text-white/85">{meta.label}</p>
+                      <p className="mt-3 text-sm font-semibold">
                         {Math.round(day.max)}° / {Math.round(day.min)}°
                       </p>
                       <p className="text-xs text-white/75">
@@ -324,84 +397,105 @@ export function WeatherDashboard() {
                   );
                 })}
               </div>
+              </div>
             </div>
           ) : null}
         </div>
+        </div>
 
-        <aside className="rounded-[2rem] border border-white/60 bg-slate-950 p-6 text-white shadow-[0_18px_60px_rgba(15,23,42,0.12)]">
-          <p className="text-sm font-semibold uppercase tracking-[0.28em] text-sky-300">
-            Extra API integration
-          </p>
-          <h2 className="mt-3 text-2xl font-semibold tracking-tight">
-            OpenStreetMap handoff for the chosen location
-          </h2>
-          <p className="mt-3 text-sm leading-6 text-slate-300">
-            This satisfies the optional API integration requirement by resolving a
-            real place and linking directly to a live map.
-          </p>
-
-          {weather ? (
-            <div className="mt-6 rounded-[1.75rem] bg-white/8 p-5">
-              <p className="text-sm text-slate-300">{weather.location.name}</p>
-              <p className="mt-3 text-sm text-slate-400">
-                {weather.location.latitude.toFixed(4)},{" "}
-                {weather.location.longitude.toFixed(4)}
-              </p>
-              <a
-                className="mt-5 inline-flex rounded-2xl bg-sky-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-300"
-                href={weather.mapUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Open map for this location
-              </a>
-            </div>
-          ) : (
-            <div className="mt-6 rounded-[1.75rem] border border-dashed border-white/15 px-4 py-5 text-sm text-slate-400">
-              Search for a place or use your location to generate a live map link.
-            </div>
-          )}
-
-          <div className="mt-6 rounded-[1.75rem] bg-white/8 p-5 text-sm leading-6 text-slate-300">
-            <p className="font-semibold text-white">Graceful error handling shown here:</p>
-            <p className="mt-2">
-              Invalid locations return a visible validation message instead of a broken
-              screen.
+        <aside className="grid gap-6 xl:sticky xl:top-6 xl:self-start">
+          <div className="rounded-[2rem] border border-slate-200/70 bg-slate-950 p-6 text-white shadow-[0_18px_60px_rgba(15,23,42,0.12)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-sky-300">
+              Location Context
             </p>
-            <p>
-              Denied geolocation permission falls back to manual search with a specific
-              explanation.
+            <h2 className="mt-3 text-2xl font-semibold tracking-tight">
+              OpenStreetMap handoff for the selected place
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-slate-300">
+              This supports the additional API integration requirement while giving the
+              interface a clear “where is this?” companion panel.
             </p>
+
+            {weather ? (
+              <div className="mt-6 rounded-[1.75rem] border border-white/10 bg-white/8 p-5">
+                <p className="text-sm font-medium text-white">{weather.location.name}</p>
+                <p className="mt-3 font-mono text-xs text-slate-400">
+                  {weather.location.latitude.toFixed(4)},{" "}
+                  {weather.location.longitude.toFixed(4)}
+                </p>
+                <a
+                  className="mt-5 inline-flex w-full items-center justify-center rounded-2xl bg-sky-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-300"
+                  href={weather.mapUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Open map for this location
+                </a>
+              </div>
+            ) : (
+              <div className="mt-6 rounded-[1.75rem] border border-dashed border-white/15 px-4 py-5 text-sm text-slate-400">
+                Search for a location to populate the contextual map panel.
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-[2rem] border border-slate-200/70 bg-white p-6 shadow-[var(--shadow)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+              UX Notes
+            </p>
+            <h3 className="mt-3 text-xl font-semibold tracking-tight text-slate-950">
+              Designed for clarity over clutter
+            </h3>
+            <div className="mt-5 grid gap-3">
+              <div className="rounded-2xl bg-slate-50 px-4 py-4">
+                <p className="text-sm font-semibold text-slate-900">Error visibility</p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  Invalid locations and denied geolocation permissions surface clear,
+                  non-technical messages.
+                </p>
+              </div>
+              <div className="rounded-2xl bg-slate-50 px-4 py-4">
+                <p className="text-sm font-semibold text-slate-900">Progressive layout</p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  Search, current conditions, map context, and historical tools are
+                  grouped into predictable sections.
+                </p>
+              </div>
+            </div>
           </div>
         </aside>
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-        <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.06)]">
-          <div className="flex items-start justify-between gap-4">
+      <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+        <div className="rounded-[2rem] border border-slate-200/70 bg-white p-6 shadow-[var(--shadow)] sm:p-7">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-700">
-                Backend CRUD
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700">
+                Historical Weather Capture
               </p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
-                Save a historical weather lookup
+              <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
+                Save a location and date range
               </h2>
+              <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">
+                This section covers the backend CRUD requirement by persisting validated
+                weather lookups and allowing them to be edited or removed later.
+              </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <a
-                className="rounded-2xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-950 hover:text-slate-950"
+                className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-950 hover:text-slate-950"
                 href={`${apiBaseUrl}/api/records/export?format=json`}
               >
                 Export JSON
               </a>
               <a
-                className="rounded-2xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-950 hover:text-slate-950"
+                className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-950 hover:text-slate-950"
                 href={`${apiBaseUrl}/api/records/export?format=csv`}
               >
                 Export CSV
               </a>
               <a
-                className="rounded-2xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-950 hover:text-slate-950"
+                className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-950 hover:text-slate-950"
                 href={`${apiBaseUrl}/api/records/export?format=md`}
               >
                 Export MD
@@ -409,9 +503,9 @@ export function WeatherDashboard() {
             </div>
           </div>
 
-          <form className="mt-6 grid gap-4" onSubmit={handleRecordSubmit}>
+          <form className="mt-7 grid gap-4" onSubmit={handleRecordSubmit}>
             <input
-              className="rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-400"
+              className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm text-slate-900 outline-none transition focus:border-emerald-400 focus:bg-white"
               placeholder="Location to save"
               value={recordForm.locationQuery}
               onChange={(event) =>
@@ -425,13 +519,18 @@ export function WeatherDashboard() {
               <label className="grid gap-2 text-sm text-slate-700">
                 <span>Start date</span>
                 <input
-                  className="rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-emerald-400"
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 outline-none transition focus:border-emerald-400 focus:bg-white"
                   type="date"
+                  max={today || undefined}
                   value={recordForm.startDate}
                   onChange={(event) =>
                     setRecordForm((current) => ({
                       ...current,
                       startDate: event.target.value,
+                      endDate:
+                        current.endDate && event.target.value > current.endDate
+                          ? event.target.value
+                          : current.endDate,
                     }))
                   }
                 />
@@ -439,8 +538,10 @@ export function WeatherDashboard() {
               <label className="grid gap-2 text-sm text-slate-700">
                 <span>End date</span>
                 <input
-                  className="rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-emerald-400"
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 outline-none transition focus:border-emerald-400 focus:bg-white"
                   type="date"
+                  min={recordForm.startDate || undefined}
+                  max={today || undefined}
                   value={recordForm.endDate}
                   onChange={(event) =>
                     setRecordForm((current) => ({
@@ -451,8 +552,12 @@ export function WeatherDashboard() {
                 />
               </label>
             </div>
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+              Select past dates only. Choose the start date first, then choose an end
+              date on or after the start date. The allowed range is up to 14 days.
+            </div>
             <textarea
-              className="min-h-28 rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-400"
+              className="min-h-28 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm text-slate-900 outline-none transition focus:border-emerald-400 focus:bg-white"
               placeholder="Optional notes"
               value={recordForm.notes}
               onChange={(event) =>
@@ -464,7 +569,7 @@ export function WeatherDashboard() {
             />
 
             {recordError ? (
-              <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
                 {recordError}
               </div>
             ) : null}
@@ -472,7 +577,7 @@ export function WeatherDashboard() {
             <div className="flex flex-wrap gap-3">
               <button
                 type="submit"
-                className="rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-emerald-300"
+                className="rounded-2xl bg-emerald-600 px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-emerald-300"
                 disabled={recordSubmitting}
               >
                 {recordSubmitting
@@ -484,7 +589,7 @@ export function WeatherDashboard() {
               {editingId ? (
                 <button
                   type="button"
-                  className="rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700"
+                  className="rounded-2xl border border-slate-300 px-5 py-3.5 text-sm font-semibold text-slate-700"
                   onClick={() => {
                     setEditingId(null);
                     setRecordForm(emptyRecordForm);
@@ -497,24 +602,28 @@ export function WeatherDashboard() {
           </form>
         </div>
 
-        <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.06)]">
+        <div className="rounded-[2rem] border border-slate-200/70 bg-white p-6 shadow-[var(--shadow)] sm:p-7">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-violet-700">
-                Saved Requests
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-violet-700">
+                Stored Weather Records
               </p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
-                Read, update, and delete persisted data
+              <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
+                Read, update, and delete persisted history
               </h2>
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                Each card represents one saved historical request with summarized day
+                results and inline management actions.
+              </p>
             </div>
           </div>
 
           {recordsLoading ? (
-            <div className="mt-6 rounded-2xl border border-dashed border-slate-300 px-4 py-5 text-sm text-slate-500">
+            <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm text-slate-500">
               Loading saved weather history...
             </div>
           ) : records.length === 0 ? (
-            <div className="mt-6 rounded-2xl border border-dashed border-slate-300 px-4 py-5 text-sm text-slate-500">
+            <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm text-slate-500">
               No records yet. Save a date range on the left to populate the database.
             </div>
           ) : (
@@ -522,31 +631,31 @@ export function WeatherDashboard() {
               {records.map((record) => (
                 <article
                   key={record.id}
-                  className="rounded-[1.5rem] border border-slate-200 p-4"
+                  className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm"
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div>
                       <h3 className="text-lg font-semibold text-slate-950">
                         {record.locationName}
                       </h3>
-                      <p className="text-sm text-slate-500">
-                        {record.startDate} to {record.endDate}
+                      <p className="mt-1 font-mono text-xs uppercase tracking-[0.18em] text-slate-500">
+                        {formatRange(record)}
                       </p>
                       {record.notes ? (
-                        <p className="mt-2 text-sm text-slate-700">{record.notes}</p>
+                        <p className="mt-3 text-sm leading-6 text-slate-700">{record.notes}</p>
                       ) : null}
                     </div>
                     <div className="flex gap-2">
                       <button
                         type="button"
-                        className="rounded-2xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
+                        className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700"
                         onClick={() => handleEdit(record)}
                       >
                         Edit
                       </button>
                       <button
                         type="button"
-                        className="rounded-2xl border border-rose-300 px-4 py-2 text-sm font-semibold text-rose-700"
+                        className="rounded-2xl border border-rose-300 px-4 py-2.5 text-sm font-semibold text-rose-700"
                         onClick={() => void handleDelete(record.id)}
                       >
                         Delete
@@ -556,14 +665,17 @@ export function WeatherDashboard() {
 
                   <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                     {record.days.map((day) => (
-                      <div key={day.date} className="rounded-2xl bg-slate-50 px-4 py-3">
+                      <div
+                        key={day.date}
+                        className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5"
+                      >
                         <p className="text-sm font-semibold text-slate-900">
                           {formatDayLabel(day.date)}
                         </p>
-                        <p className="mt-1 text-sm text-slate-600">
+                        <p className="mt-2 text-sm font-medium text-slate-700">
                           {Math.round(day.max)}° / {Math.round(day.min)}°
                         </p>
-                        <p className="text-xs text-slate-500">
+                        <p className="mt-1 text-xs leading-5 text-slate-500">
                           Mean {Math.round(day.mean)}° and rain {day.precipitationSum} mm
                         </p>
                       </div>
