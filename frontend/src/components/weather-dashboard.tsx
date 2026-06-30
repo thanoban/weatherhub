@@ -234,12 +234,11 @@ export function WeatherDashboard() {
                   Weather Intelligence Dashboard
                 </p>
                 <h1 className="mt-3 text-4xl font-semibold tracking-tight text-white sm:text-5xl">
-                  Professional weather lookup with forecast, history, and exports
+                  Weather intelligence, organized beautifully.
                 </h1>
                 <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300">
-                  A structured full-stack weather experience built for the assessment:
-                  live search, browser geolocation, 5-day forecast, historical CRUD,
-                  and export-ready records.
+                  Track live conditions, explore historical ranges, and export weather
+                  records from one clean full-stack dashboard.
                 </p>
               </div>
 
